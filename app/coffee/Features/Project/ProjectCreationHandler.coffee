@@ -67,27 +67,31 @@ module.exports =
 		@createBlankProject owner_id, projectName, (error, project)->
 			return callback(error) if error?
 			dirname = __dirname + "/../../.." + template_dir + "/"
-			async.series [
-				(callback) ->
-					self._buildTemplate2 dirname, "beamer.tex", owner_id, projectName, (error, docLines)->
-						return callback(error) if error?
-						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
-							return callback(error) if error?
-							ProjectEntityHandler.setRootDoc project._id, doc._id, callback
-				(callback) ->
-					universePath = Path.resolve(dirname + "silhouettes.jpg")
-					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "silhouettes.jpg", universePath, callback
-				(callback) ->
-					universePath = Path.resolve(dirname + "ENSTA-ParisTech.jpg")
-					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "ENSTA-ParisTech.jpg", universePath, callback
-				(callback) ->
-					universePath = Path.resolve(dirname + "beamerthemeENSTA.sty")
-					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "beamerthemeENSTA.sty", universePath, callback
-				(callback) ->
-					universePath = Path.resolve(dirname + "frise.jpg")
-					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "frise.jpg", universePath, callback
-			], (error) ->
-				callback(error, project)
+			logger.log "directory" + dirname
+			fs.readdir dirname, (error, files) ->
+				return callback(error) if error?
+				logger.log "files " + files
+
+				for file in files
+					extension = file.split(".")[1]
+					if extension == "tex"
+						async.series [
+							(callback) ->
+								self._buildTemplate2 dirname, file, owner_id, projectName, (error, docLines)->
+									return callback(error) if error?
+									ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
+										return callback(error) if error?
+										ProjectEntityHandler.setRootDoc project._id, doc._id, callback
+						], (error) ->
+							callback(error, project)
+					else
+						async.series [
+							(callback) ->
+								path = Path.resolve(dirname + file)
+								ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, file, path, callback
+						], (error) ->
+							callback(error, project)
+
 
 
 	_buildTemplate: (template_dir, file_name, user_id, project_name, callback = (error, output) ->)->
