@@ -31,7 +31,8 @@ module.exports =
 		self = @
 		@createBlankProject owner_id, projectName, (error, project)->
 			return callback(error) if error?
-			self._buildTemplate "mainbasic.tex", owner_id, projectName, (error, docLines)->
+			project_files = "/templates/basic/"
+			self._buildTemplate project_files, "main.tex", owner_id, projectName, (error, docLines)->
 				return callback(error) if error?
 				ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
 					return callback(error) if error?
@@ -42,30 +43,59 @@ module.exports =
 		self = @
 		@createBlankProject owner_id, projectName, (error, project)->
 			return callback(error) if error?
+			project_files = "/templates/project_files/"
 			async.series [
 				(callback) ->
-					self._buildTemplate "main.tex", owner_id, projectName, (error, docLines)->
+					self._buildTemplate project_files, "main.tex", owner_id, projectName, (error, docLines)->
 						return callback(error) if error?
 						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
 							return callback(error) if error?
 							ProjectEntityHandler.setRootDoc project._id, doc._id, callback
 				(callback) ->
-					self._buildTemplate "references.bib", owner_id, projectName, (error, docLines)->
+					self._buildTemplate project_files, "references.bib", owner_id, projectName, (error, docLines)->
 						return callback(error) if error?
 						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "references.bib", docLines, (error, doc)->
 							callback(error)
 				(callback) ->
-					universePath = Path.resolve(__dirname + "/../../../templates/project_files/universe.jpg")
-					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "universe.jpg", universePath, callback
+					universePath = Path.resolve(__dirname + "/../../.." + project_files + "frise.jpg")
+					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "frise.jpg", universePath, callback
 			], (error) ->
 				callback(error, project)
 
-	_buildTemplate: (template_name, user_id, project_name, callback = (error, output) ->)->
+	createProject: (owner_id, projectName, template_dir, callback = (error, project) ->)->
+		self = @
+		@createBlankProject owner_id, projectName, (error, project)->
+			return callback(error) if error?
+			async.series [
+				(callback) ->
+					self._buildTemplate template_dir, "beamer.tex", owner_id, projectName, (error, docLines)->
+						return callback(error) if error?
+						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
+							return callback(error) if error?
+							ProjectEntityHandler.setRootDoc project._id, doc._id, callback
+				(callback) ->
+					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/silhouettes.jpg")
+					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "silhouettes.jpg", universePath, callback
+				(callback) ->
+					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/ENSTA-ParisTech.jpg")
+					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "ENSTA-ParisTech.jpg", universePath, callback
+				(callback) ->
+					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/beamerthemeENSTA.sty")
+					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "beamerthemeENSTA.sty", universePath, callback
+				(callback) ->
+					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/frise.jpg")
+					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "frise.jpg", universePath, callback
+			], (error) ->
+				callback(error, project)
+
+
+
+	_buildTemplate: (template_dir, file_name, user_id, project_name, callback = (error, output) ->)->
 		User.findById user_id, "first_name last_name", (error, user)->
 			return callback(error) if error?
 			monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
 
-			templatePath = Path.resolve(__dirname + "/../../../templates/project_files/#{template_name}")
+			templatePath = Path.resolve(__dirname + "/../../.." + "#{template_dir}/#{file_name}")
 			fs.readFile templatePath, (error, template) ->
 				return callback(error) if error?
 				data =

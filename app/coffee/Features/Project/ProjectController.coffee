@@ -93,9 +93,14 @@ module.exports = ProjectController =
 		logger.log user: user, projectType: template, name: projectName, "creating project"
 		async.waterfall [
 			(cb)->
+				for temp in Settings.templates2
+					if template == temp['name']
+						logger.log "totoyes: " + JSON.stringify(temp['name']) + " " + template
+						projectCreationHandler.createProject user._id, projectName, temp['url'], cb
+
 				if template == 'example'
 					projectCreationHandler.createExampleProject user._id, projectName, cb
-				else
+				if template == 'basic'
 					projectCreationHandler.createBasicProject user._id, projectName, cb
 		], (err, project)->
 			if err?

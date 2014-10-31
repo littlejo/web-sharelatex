@@ -9,13 +9,18 @@
 		li
 			a(
 				href,
-				ng-click="openCreateProjectModal()"
+				ng-click="openCreateProjectModal('basic')"
 			) #{translate("blank_project")}
 		li
 			a(
 				href,
 				ng-click="openCreateProjectModal('example')"
 			) #{translate("example_project")}
+		li
+			a(
+				href,
+				ng-click="openCreateProjectModal('presentation')"
+			) #{translate("beamer_project")}
 		li
 			a(
 				href,
