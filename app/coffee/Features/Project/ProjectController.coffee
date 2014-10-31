@@ -95,7 +95,7 @@ module.exports = ProjectController =
 			(cb)->
 				for temp in Settings.templates2
 					if template == temp['name']
-						logger.log "totoyes: " + JSON.stringify(temp['name']) + " " + template
+						logger.log "template: " + JSON.stringify(temp['name']) + " " + template
 						projectCreationHandler.createProject user._id, projectName, temp['url'], cb
 
 		], (err, project)->
