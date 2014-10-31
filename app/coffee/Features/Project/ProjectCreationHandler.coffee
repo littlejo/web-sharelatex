@@ -66,28 +66,28 @@ module.exports =
 		self = @
 		@createBlankProject owner_id, projectName, (error, project)->
 			return callback(error) if error?
+			dirname = __dirname + "/../../.." + template_dir + "/"
 			async.series [
 				(callback) ->
-					self._buildTemplate template_dir, "beamer.tex", owner_id, projectName, (error, docLines)->
+					self._buildTemplate2 dirname, "beamer.tex", owner_id, projectName, (error, docLines)->
 						return callback(error) if error?
 						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
 							return callback(error) if error?
 							ProjectEntityHandler.setRootDoc project._id, doc._id, callback
 				(callback) ->
-					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/silhouettes.jpg")
+					universePath = Path.resolve(dirname + "silhouettes.jpg")
 					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "silhouettes.jpg", universePath, callback
 				(callback) ->
-					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/ENSTA-ParisTech.jpg")
+					universePath = Path.resolve(dirname + "ENSTA-ParisTech.jpg")
 					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "ENSTA-ParisTech.jpg", universePath, callback
 				(callback) ->
-					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/beamerthemeENSTA.sty")
+					universePath = Path.resolve(dirname + "beamerthemeENSTA.sty")
 					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "beamerthemeENSTA.sty", universePath, callback
 				(callback) ->
-					universePath = Path.resolve(__dirname + "/../../.." + template_dir + "/frise.jpg")
+					universePath = Path.resolve(dirname + "frise.jpg")
 					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "frise.jpg", universePath, callback
 			], (error) ->
 				callback(error, project)
-
 
 
 	_buildTemplate: (template_dir, file_name, user_id, project_name, callback = (error, output) ->)->
@@ -96,6 +96,22 @@ module.exports =
 			monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
 
 			templatePath = Path.resolve(__dirname + "/../../.." + "#{template_dir}/#{file_name}")
+			fs.readFile templatePath, (error, template) ->
+				return callback(error) if error?
+				data =
+					project_name: project_name
+					user: user
+					year: new Date().getUTCFullYear()
+					month: monthNames[new Date().getUTCMonth()]
+				output = _.template(template.toString(), data)
+				callback null, output.split("\n")
+
+	_buildTemplate2: (dirname, file_name, user_id, project_name, callback = (error, output) ->)->
+		User.findById user_id, "first_name last_name", (error, user)->
+			return callback(error) if error?
+			monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
+
+			templatePath = Path.resolve(dirname + file_name)
 			fs.readFile templatePath, (error, template) ->
 				return callback(error) if error?
 				data =
