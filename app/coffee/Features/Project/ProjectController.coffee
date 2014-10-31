@@ -98,10 +98,6 @@ module.exports = ProjectController =
 						logger.log "totoyes: " + JSON.stringify(temp['name']) + " " + template
 						projectCreationHandler.createProject user._id, projectName, temp['url'], cb
 
-				if template == 'example'
-					projectCreationHandler.createExampleProject user._id, projectName, cb
-				if template == 'basic'
-					projectCreationHandler.createBasicProject user._id, projectName, cb
 		], (err, project)->
 			if err?
 				logger.error err: err, project: project, user: user, name: projectName, templateType: template, "error creating project"

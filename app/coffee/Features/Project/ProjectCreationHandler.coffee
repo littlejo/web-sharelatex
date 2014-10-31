@@ -27,41 +27,6 @@ module.exports =
 				return callback(err) if err?
 				callback err, project
 
-	createBasicProject :  (owner_id, projectName, callback = (error, project) ->)->
-		self = @
-		@createBlankProject owner_id, projectName, (error, project)->
-			return callback(error) if error?
-			project_files = "/templates/basic/"
-			self._buildTemplate project_files, "main.tex", owner_id, projectName, (error, docLines)->
-				return callback(error) if error?
-				ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
-					return callback(error) if error?
-					ProjectEntityHandler.setRootDoc project._id, doc._id, (error) ->
-						callback(error, project)
-
-	createExampleProject: (owner_id, projectName, callback = (error, project) ->)->
-		self = @
-		@createBlankProject owner_id, projectName, (error, project)->
-			return callback(error) if error?
-			project_files = "/templates/project_files/"
-			async.series [
-				(callback) ->
-					self._buildTemplate project_files, "main.tex", owner_id, projectName, (error, docLines)->
-						return callback(error) if error?
-						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
-							return callback(error) if error?
-							ProjectEntityHandler.setRootDoc project._id, doc._id, callback
-				(callback) ->
-					self._buildTemplate project_files, "references.bib", owner_id, projectName, (error, docLines)->
-						return callback(error) if error?
-						ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "references.bib", docLines, (error, doc)->
-							callback(error)
-				(callback) ->
-					universePath = Path.resolve(__dirname + "/../../.." + project_files + "frise.jpg")
-					ProjectEntityHandler.addFile project._id, project.rootFolder[0]._id, "frise.jpg", universePath, callback
-			], (error) ->
-				callback(error, project)
-
 	createProject: (owner_id, projectName, template_dir, callback = (error, project) ->)->
 		self = @
 		@createBlankProject owner_id, projectName, (error, project)->
@@ -77,9 +42,19 @@ module.exports =
 					if extension == "tex"
 						async.series [
 							(callback) ->
-								self._buildTemplate2 dirname, file, owner_id, projectName, (error, docLines)->
+								self._buildTemplate dirname, file, owner_id, projectName, (error, docLines)->
 									return callback(error) if error?
 									ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, "main.tex", docLines, (error, doc)->
+										return callback(error) if error?
+										ProjectEntityHandler.setRootDoc project._id, doc._id, callback
+						], (error) ->
+							callback(error, project)
+					else if extension == "bib"
+						async.series [
+							(callback) ->
+								self._buildTemplate dirname, file, owner_id, projectName, (error, docLines)->
+									return callback(error) if error?
+									ProjectEntityHandler.addDoc project._id, project.rootFolder[0]._id, file, docLines, (error, doc)->
 										return callback(error) if error?
 										ProjectEntityHandler.setRootDoc project._id, doc._id, callback
 						], (error) ->
@@ -94,23 +69,7 @@ module.exports =
 
 
 
-	_buildTemplate: (template_dir, file_name, user_id, project_name, callback = (error, output) ->)->
-		User.findById user_id, "first_name last_name", (error, user)->
-			return callback(error) if error?
-			monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]
-
-			templatePath = Path.resolve(__dirname + "/../../.." + "#{template_dir}/#{file_name}")
-			fs.readFile templatePath, (error, template) ->
-				return callback(error) if error?
-				data =
-					project_name: project_name
-					user: user
-					year: new Date().getUTCFullYear()
-					month: monthNames[new Date().getUTCMonth()]
-				output = _.template(template.toString(), data)
-				callback null, output.split("\n")
-
-	_buildTemplate2: (dirname, file_name, user_id, project_name, callback = (error, output) ->)->
+	_buildTemplate: (dirname, file_name, user_id, project_name, callback = (error, output) ->)->
 		User.findById user_id, "first_name last_name", (error, user)->
 			return callback(error) if error?
 			monthNames = [ "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" ]

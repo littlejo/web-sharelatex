@@ -310,6 +310,12 @@ module.exports =
 		name : "presentation",
 		url : "/templates/presentations"
 	}, {
+		name : "example",
+		url : "/templates/project_files/"
+	}, {
+		name : "basic",
+		url : "/templates/basic"
+	}, {
 		name : "thesis",
 		url : "/templates/thesis"
 	}, {
